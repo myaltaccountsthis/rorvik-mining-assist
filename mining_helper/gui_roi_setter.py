@@ -1,19 +1,18 @@
 import sys
 import json
 import threading
+import os
 from detector import Detector
 from datetime import datetime
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QTextEdit,
-    QVBoxLayout, QHBoxLayout
+    QVBoxLayout, QHBoxLayout, QCheckBox, QToolButton
 )
 from PyQt5.QtCore import QRect, Qt, QPoint
-from PyQt5.QtGui import QPainter, QColor
-
+from PyQt5.QtGui import QPainter, QColor, QIcon
 
 CONFIG_FILE = "roi_config.json"
 HANDLE_SIZE = 10
-
 
 class Overlay(QWidget):
     def __init__(self, roi: QRect, update_callback=None):
@@ -82,11 +81,10 @@ class Overlay(QWidget):
         corner = QPoint(self.roi.right(), self.roi.bottom())
         return QRect(corner.x() - HANDLE_SIZE, corner.y() - HANDLE_SIZE, HANDLE_SIZE*2, HANDLE_SIZE*2).contains(pos)
 
-
 class ROISetter(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Mining Assist - ROI Setter")
+        self.setWindowTitle("Mining Assistant")
         self.setGeometry(300, 300, 600, 200)
 
         self.detector = None
@@ -137,16 +135,42 @@ class ROISetter(QWidget):
         self.setter_button.clicked.connect(self.toggle_setter_mode)
         self.save_button.clicked.connect(self.save_roi)
 
+        self.continuous_checkbox = QCheckBox("Continuous Mode")
+        self.continuous_checkbox.setStyleSheet("color: black; margin-left: 12px;")
+        self.continuous_checkbox.setChecked(True) # On by default
+
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.start_button)
         button_layout.addWidget(self.stop_button)
         button_layout.addWidget(self.setter_button)
         button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.continuous_checkbox)
 
+        clear_button = QToolButton(self.console)
+        icon_path = os.path.join("..", "assets", "clear_icon.svg")
+        clear_button.setIcon(QIcon(icon_path))
+        clear_button.setToolTip("Clear log")
+        clear_button.setStyleSheet("""
+            QToolButton {
+                border: none;
+                background: transparent;
+                padding: 0px;
+            }
+        """)
+        clear_button.resize(16, 16)
+        clear_button.clicked.connect(self.console.clear)
+
+        def on_resize(event):
+            padding = 10
+            scroll_width = self.console.verticalScrollBar().width() if self.console.verticalScrollBar().isVisible() else 0
+            clear_button.move(self.console.width() - scroll_width - clear_button.width() - padding, 4)
+            QTextEdit.resizeEvent(self.console, event)
+        self.console.resizeEvent = on_resize
+    
         layout = QVBoxLayout()
         layout.addLayout(button_layout)
         layout.addWidget(self.console)
-
+    
         self.setLayout(layout)
 
     def start_detector(self):
@@ -154,10 +178,13 @@ class ROISetter(QWidget):
             self.log("Detector is already running.")
             return
 
-        self.detector = Detector(log_func=self.log)
+        continuous = self.continuous_checkbox.isChecked()
+
+        self.detector = Detector(log_func=self.log, continuous=continuous)
         self.detector_thread = threading.Thread(target=self.detector.run_forever, daemon=True)
         self.detector_thread.start()
         self.log("Detector started.")
+        self.continuous_checkbox.setEnabled(False)
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
 
@@ -167,6 +194,7 @@ class ROISetter(QWidget):
             self.detector = None
             self.detector_thread = None
             self.log("Detector stopped.")
+            self.continuous_checkbox.setEnabled(True)
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)
 
@@ -211,7 +239,6 @@ class ROISetter(QWidget):
         if self.overlay:
             self.overlay.close()
         event.accept()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

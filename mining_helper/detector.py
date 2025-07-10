@@ -4,14 +4,17 @@ import threading
 import numpy as np
 import mss
 import cv2
+import pyautogui
 from pynput import mouse
 from controller import release_left_click
 
 CONFIG_FILE = "roi_config.json"
-DEFAULT_DELAY = 0.4        # Increased delay to let bar fade in
+DEFAULT_DELAY = 0.2
 POLL_INTERVAL = 0.001
-RELEASE_DELAY = 0.02
+RELEASE_DELAY = 0.2
 RESET_TIMEOUT = 3.0
+RECHECK_GRACE_PERIOD = 0.2
+MAX_REENGAGE_ATTEMPTS = 2
 
 DOT_GRAY = 146
 FILL_GRAY = 37
@@ -20,11 +23,13 @@ TOLERANCE = 10
 
 
 class Detector:
-    def __init__(self, log_func=print):
+    def __init__(self, log_func=print, continuous=False):
         self.log = log_func
+        self.continuous = continuous
         self.running = False
         self.mouse_pressed = False
         self.stop_requested = False
+        self.mining_thread_active = False
         self.listener = mouse.Listener(on_click=self.on_click)
         self.listener.start()
         self.load_roi()
@@ -40,50 +45,94 @@ class Detector:
     def on_click(self, x, y, button, pressed):
         if button == mouse.Button.left:
             self.mouse_pressed = pressed
-            if pressed:
+            if pressed and not self.mining_thread_active:
                 threading.Thread(target=self.handle_mouse_hold, daemon=True).start()
 
     def handle_mouse_hold(self):
+        if self.mining_thread_active:
+            return
+        self.mining_thread_active = True
+
         time.sleep(DEFAULT_DELAY)
         if not self.mouse_pressed or self.stop_requested:
+            self.mining_thread_active = False
             return
-    
+
         self.log("[INFO] Left click detected. Starting ROI polling.")
         start_time = time.time()
         max_crit_ratio = 0.0
         triggered = False
-    
+
         while self.mouse_pressed and not self.stop_requested:
             frame = self.capture_roi()
             if frame is None:
                 continue
-            
+
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
+
             dot_ratio = self.gray_ratio(gray, DOT_GRAY)
             fill_ratio = self.gray_ratio(gray, FILL_GRAY)
             crit_ratio = self.gray_ratio(gray, CRITICAL_GRAY)
-    
+
             self.log(f"[DEBUG] GrayMatch % — Dot: {dot_ratio:.2%}, Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
-    
+
             if crit_ratio > max_crit_ratio:
                 max_crit_ratio = crit_ratio
-    
+
             if dot_ratio > 0.01 and fill_ratio > 0.01:
                 drop_from_peak = max_crit_ratio - crit_ratio
                 if drop_from_peak >= 0.005 and max_crit_ratio > 0.01 and not triggered:
                     self.log(f"[ACTION] Critical drop from peak: {max_crit_ratio:.2%} → {crit_ratio:.2%}")
                     release_left_click()
                     triggered = True
-                    return
-    
+                    break
+
             if time.time() - start_time > RESET_TIMEOUT:
                 self.log("[INFO] Timeout: no critical zone triggered.")
+                self.mining_thread_active = False
                 return
-    
+
             time.sleep(POLL_INTERVAL)
 
+        if self.continuous and not self.stop_requested:
+            self.monitor_for_next_ore()
+        else:
+            self.mining_thread_active = False
 
+    def monitor_for_next_ore(self):
+        attempts = 0
+
+        time.sleep(0.1)
+        while not self.stop_requested and attempts < MAX_REENGAGE_ATTEMPTS:
+            self.log("[INFO] Re-engaging for continuous mining...")
+            pyautogui.mouseDown()
+            self.mouse_pressed = True
+            
+            time.sleep(RECHECK_GRACE_PERIOD)
+
+            frame = self.capture_roi()
+            if frame is None:
+                break
+
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            fill_ratio = self.gray_ratio(gray, FILL_GRAY)
+            crit_ratio = self.gray_ratio(gray, CRITICAL_GRAY)
+
+            self.log(f"[DEBUG] Re-check ratios — Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
+
+            if fill_ratio > 0.01 and crit_ratio > 0.01:
+                self.log("[INFO] Bar detected. Continuing mining.")
+                self.mining_thread_active = False
+                threading.Thread(target=self.handle_mouse_hold, daemon=True).start()
+                return
+            else:
+                self.log("[INFO] No valid bar detected. Releasing and waiting.")
+                pyautogui.mouseUp()
+                self.mouse_pressed = False
+                attempts += 1
+
+        self.log("[INFO] Giving up re-engagement. Waiting for new ore...")
+        self.mining_thread_active = False
 
     def capture_roi(self):
         try:
@@ -91,7 +140,7 @@ class Detector:
             with mss.mss() as sct:
                 monitor = {"top": y, "left": x, "width": w, "height": h}
                 sct_img = sct.grab(monitor)
-                frame = np.array(sct_img)[:, :, :3]  # Drop alpha
+                frame = np.array(sct_img)[:, :, :3]
                 return frame
         except Exception as e:
             self.log(f"[ERROR] Failed to capture ROI: {e}")
@@ -115,4 +164,7 @@ class Detector:
         self.stop_requested = True
         if self.listener:
             self.listener.stop()
+        pyautogui.mouseUp()
+        self.mouse_pressed = False
+        self.mining_thread_active = False
         self.log("[INFO] Detector listener stopped.")
