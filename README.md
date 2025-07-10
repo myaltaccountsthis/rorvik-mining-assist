@@ -12,6 +12,8 @@ If the rectangle does not properly enclose your mining bar, the program will fai
 
 Once properly positioned, please click "Save ROI" in order for the program to capture the designated area. Afterwards, you won't need to repeat this step.
 
+![Proper ROI positioning](proper_setup.png)
+
 🛠️ Depending on your PC’s performance, you may need to fine-tune some settings (like delay and polling interval) via the settings menu to achieve reliable behavior.
 
 ---
