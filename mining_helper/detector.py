@@ -7,36 +7,28 @@ import cv2
 import pyautogui
 from pynput import mouse
 from controller import release_left_click
+from config_manager import load_settings
 
-CONFIG_FILE = "roi_config.json"
-DEFAULT_DELAY = 0.2
-POLL_INTERVAL = 0.001
-RELEASE_DELAY = 0.2
-RESET_TIMEOUT = 3.0
-RECHECK_GRACE_PERIOD = 0.2
-MAX_REENGAGE_ATTEMPTS = 2
-
-DOT_GRAY = 146
-FILL_GRAY = 37
-CRITICAL_GRAY = 228
-TOLERANCE = 10
-
+ROI_CONFIG = "roi_config.json"
 
 class Detector:
     def __init__(self, log_func=print, continuous=False):
         self.log = log_func
         self.continuous = continuous
         self.running = False
+        self.settings = load_settings()
+
         self.mouse_pressed = False
         self.stop_requested = False
         self.mining_thread_active = False
+
         self.listener = mouse.Listener(on_click=self.on_click)
         self.listener.start()
         self.load_roi()
 
     def load_roi(self):
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(ROI_CONFIG, 'r') as f:
                 self.roi = json.load(f)
         except Exception as e:
             self.log(f"[ERROR] Failed to load ROI config: {e}")
@@ -53,7 +45,7 @@ class Detector:
             return
         self.mining_thread_active = True
 
-        time.sleep(DEFAULT_DELAY)
+        time.sleep(self.settings["DEFAULT_DELAY"])
         if not self.mouse_pressed or self.stop_requested:
             self.mining_thread_active = False
             return
@@ -70,11 +62,11 @@ class Detector:
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            dot_ratio = self.gray_ratio(gray, DOT_GRAY)
-            fill_ratio = self.gray_ratio(gray, FILL_GRAY)
-            crit_ratio = self.gray_ratio(gray, CRITICAL_GRAY)
+            dot_ratio = self.gray_ratio(gray, self.settings["DOT_GRAY"])
+            fill_ratio = self.gray_ratio(gray, self.settings["FILL_GRAY"])
+            crit_ratio = self.gray_ratio(gray, self.settings["CRITICAL_GRAY"])
 
-            self.log(f"[DEBUG] GrayMatch % — Dot: {dot_ratio:.2%}, Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
+            # self.log(f"[DEBUG] GrayMatch % — Dot: {dot_ratio:.2%}, Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
 
             if crit_ratio > max_crit_ratio:
                 max_crit_ratio = crit_ratio
@@ -87,12 +79,12 @@ class Detector:
                     triggered = True
                     break
 
-            if time.time() - start_time > RESET_TIMEOUT:
+            if time.time() - start_time > self.settings["RESET_TIMEOUT"]:
                 self.log("[INFO] Timeout: no critical zone triggered.")
                 self.mining_thread_active = False
                 return
 
-            time.sleep(POLL_INTERVAL)
+            time.sleep(self.settings["POLL_INTERVAL"])
 
         if self.continuous and not self.stop_requested:
             self.monitor_for_next_ore()
@@ -103,22 +95,22 @@ class Detector:
         attempts = 0
 
         time.sleep(0.1)
-        while not self.stop_requested and attempts < MAX_REENGAGE_ATTEMPTS:
+        while not self.stop_requested and attempts < self.settings["MAX_REENGAGE_ATTEMPTS"]:
             self.log("[INFO] Re-engaging for continuous mining...")
             pyautogui.mouseDown()
             self.mouse_pressed = True
             
-            time.sleep(RECHECK_GRACE_PERIOD)
+            time.sleep(self.settings["RECHECK_GRACE_PERIOD"])
 
             frame = self.capture_roi()
             if frame is None:
                 break
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            fill_ratio = self.gray_ratio(gray, FILL_GRAY)
-            crit_ratio = self.gray_ratio(gray, CRITICAL_GRAY)
+            fill_ratio = self.gray_ratio(gray, self.settings["FILL_GRAY"])
+            crit_ratio = self.gray_ratio(gray, self.settings["CRITICAL_GRAY"])
 
-            self.log(f"[DEBUG] Re-check ratios — Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
+            # self.log(f"[DEBUG] Re-check ratios — Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
 
             if fill_ratio > 0.01 and crit_ratio > 0.01:
                 self.log("[INFO] Bar detected. Continuing mining.")
@@ -146,7 +138,9 @@ class Detector:
             self.log(f"[ERROR] Failed to capture ROI: {e}")
             return None
 
-    def gray_ratio(self, gray_img, target, tolerance=TOLERANCE):
+    def gray_ratio(self, gray_img, target, tolerance=None):
+        if tolerance is None:
+            tolerance = self.settings["TOLERANCE"]
         mask = (gray_img >= (target - tolerance)) & (gray_img <= (target + tolerance))
         return np.count_nonzero(mask) / mask.size
 

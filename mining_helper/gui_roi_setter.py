@@ -10,6 +10,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QRect, Qt, QPoint
 from PyQt5.QtGui import QPainter, QColor, QIcon
+from settings_dialog import SettingsDialog
+from config_manager import load_settings
 
 CONFIG_FILE = "roi_config.json"
 HANDLE_SIZE = 10
@@ -87,6 +89,9 @@ class ROISetter(QWidget):
         self.setWindowTitle("Mining Assistant")
         self.setGeometry(300, 300, 600, 200)
 
+        icon_path = os.path.join("..", "assets", "logo.svg")
+        self.setWindowIcon(QIcon(icon_path))
+
         self.detector = None
         self.detector_thread = None
         
@@ -113,6 +118,7 @@ class ROISetter(QWidget):
         self.stop_button = QPushButton("Stop")
         self.setter_button = QPushButton("Setter Mode")
         self.save_button = QPushButton("Save ROI")
+        self.settings_button = QPushButton("Settings")
 
         self.stop_button.setEnabled(False)
 
@@ -131,9 +137,9 @@ class ROISetter(QWidget):
 
         self.start_button.clicked.connect(self.start_detector)
         self.stop_button.clicked.connect(self.stop_detector)
-
         self.setter_button.clicked.connect(self.toggle_setter_mode)
         self.save_button.clicked.connect(self.save_roi)
+        self.settings_button.clicked.connect(self.open_settings)
 
         self.continuous_checkbox = QCheckBox("Continuous Mode")
         self.continuous_checkbox.setStyleSheet("color: black; margin-left: 12px;")
@@ -144,6 +150,7 @@ class ROISetter(QWidget):
         button_layout.addWidget(self.stop_button)
         button_layout.addWidget(self.setter_button)
         button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.settings_button)
         button_layout.addWidget(self.continuous_checkbox)
 
         clear_button = QToolButton(self.console)
@@ -179,6 +186,7 @@ class ROISetter(QWidget):
             return
 
         continuous = self.continuous_checkbox.isChecked()
+        settings = load_settings()
 
         self.detector = Detector(log_func=self.log, continuous=continuous)
         self.detector_thread = threading.Thread(target=self.detector.run_forever, daemon=True)
@@ -234,6 +242,10 @@ class ROISetter(QWidget):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
         print(f"[LOG] {message}")
+
+    def open_settings(self):
+        dialog = SettingsDialog(self)
+        dialog.exec_()
 
     def closeEvent(self, event):
         if self.overlay:
