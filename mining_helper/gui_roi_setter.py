@@ -16,6 +16,14 @@ from config_manager import load_settings
 CONFIG_FILE = "roi_config.json"
 HANDLE_SIZE = 10
 
+def resource_path(relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            base_path = sys._MEIPASS
+        except AttributeError:
+            base_path = os.path.abspath(".")
+        return os.path.join(base_path, relative_path)
+    
 class Overlay(QWidget):
     def __init__(self, roi: QRect, update_callback=None):
         super().__init__()
@@ -89,8 +97,7 @@ class ROISetter(QWidget):
         self.setWindowTitle("Mining Assistant")
         self.setGeometry(300, 300, 600, 200)
 
-        icon_path = os.path.join("assets", "app_logo.png")
-        self.setWindowIcon(QIcon(icon_path))
+        self.setWindowIcon(QIcon(resource_path("assets/app_logo.png")))
 
         self.detector = None
         self.detector_thread = None
@@ -100,6 +107,7 @@ class ROISetter(QWidget):
         self.init_ui()
         self.show()
 
+    
     def init_ui(self):
         self.console = QTextEdit()
         self.console.setReadOnly(True)
@@ -154,8 +162,7 @@ class ROISetter(QWidget):
         button_layout.addWidget(self.continuous_checkbox)
 
         clear_button = QToolButton(self.console)
-        icon_path = os.path.join("assets", "clear_icon.svg")
-        clear_button.setIcon(QIcon(icon_path))
+        clear_button.setIcon(QIcon(resource_path("assets/clear_icon.svg")))
         clear_button.setToolTip("Clear log")
         clear_button.setStyleSheet("""
             QToolButton {
