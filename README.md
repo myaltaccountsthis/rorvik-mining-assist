@@ -96,12 +96,13 @@ You can always click **"Reset to Default"** in the settings dialog to restore or
 
 ```
 rorvik-mining-assist/
-├── assets/
-│   ├── clear_icon.svg
-│   ├── logo.ico
-│   └── logo.svg
 ├── mining_helper/
 │   ├── __pycache__/
+|   ├──assets/
+│      ├── clear_icon.svg
+│      ├── app_logo.ico
+|      ├── original_artwork_ty_reze.png
+│      └── app_logo.png
 │   ├── config_manager.py
 │   ├── constants.py
 │   ├── controller.py
