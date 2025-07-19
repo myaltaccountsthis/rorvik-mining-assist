@@ -1,5 +1,11 @@
 # ⛏️ Mining Assistant
 
+<img src="mining_helper/assets/original_artwork_ty_reze.png" alt="Sick Artwork" width="400"/>
+
+#### 🧸 Thank you Reze for the awesome art!
+
+## Preview
+
 A lightweight automation tool designed to assist with mining actions in *RORVIK*. This tool simulates mouse interactions based on visual cues in a selected Region of Interest (ROI), automating the process of optimal mining.
 
 ---
