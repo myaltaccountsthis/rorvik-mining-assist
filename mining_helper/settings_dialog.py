@@ -19,7 +19,6 @@ class SettingsDialog(QDialog):
         # Add each editable value
         self.add_spin(form, "DEFAULT_DELAY", 0.0, 1.0, 0.01)
         self.add_spin(form, "POLL_INTERVAL", 0.0, 1.0, 0.001)
-        self.add_spin(form, "RELEASE_DELAY", 0.0, 1.0, 0.01)
         self.add_spin(form, "RESET_TIMEOUT", 0.1, 10.0, 0.1)
         self.add_spin(form, "RECHECK_GRACE_PERIOD", 0.0, 1.0, 0.01)
         self.add_spin(form, "MAX_REENGAGE_ATTEMPTS", 1, 10, 1, integer=True)

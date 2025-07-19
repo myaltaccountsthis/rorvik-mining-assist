@@ -94,13 +94,11 @@ class Detector:
     def monitor_for_next_ore(self):
         attempts = 0
 
-        time.sleep(0.1)
         while not self.stop_requested and attempts < self.settings["MAX_REENGAGE_ATTEMPTS"]:
+            time.sleep(self.settings["RECHECK_GRACE_PERIOD"])
             self.log("[INFO] Re-engaging for continuous mining...")
             pyautogui.mouseDown()
             self.mouse_pressed = True
-            
-            time.sleep(self.settings["RECHECK_GRACE_PERIOD"])
 
             frame = self.capture_roi()
             if frame is None:
@@ -118,12 +116,12 @@ class Detector:
                 threading.Thread(target=self.handle_mouse_hold, daemon=True).start()
                 return
             else:
-                self.log("[INFO] No valid bar detected. Releasing and waiting.")
-                pyautogui.mouseUp()
-                self.mouse_pressed = False
+                self.log("[INFO] No valid bar detected. Rechecking...")
                 attempts += 1
 
-        self.log("[INFO] Giving up re-engagement. Waiting for new ore...")
+        pyautogui.mouseUp()
+        self.mouse_pressed = False
+        self.log("[INFO] Max attempts reached. Giving up re-engagement.")
         self.mining_thread_active = False
 
     def capture_roi(self):
