@@ -26,7 +26,7 @@ Once properly positioned, please click "Save ROI" in order for the program to ca
 ## 📥 Download & Install (Windows Only)
 
 1. **Go to the [latest release](https://github.com/Cyrendex/rorvik-mining-assist/releases/latest).**
-2. **Download the ZIP file** (e.g., `MiningHelper-v1.1.0.zip`).
+2. **Download the ZIP file** (e.g., `MiningHelper-v1.2.zip`).
 3. **Extract the folder** to any location on your PC.
 4. **Run `MiningHelper.exe`.**
 
@@ -133,8 +133,6 @@ You can create a Windows executable using [PyInstaller](https://pyinstaller.org/
 ```bash
 pyinstaller mining_helper/main.py --onefile --icon=assets/logo.ico --name=MiningHelper
 ```
-
-Your executable will appear in the `dist/` folder. You can then zip it and distribute it via a GitHub release.
 
 ---
 
