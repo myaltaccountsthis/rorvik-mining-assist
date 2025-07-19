@@ -6,8 +6,6 @@ DEFAULT_SETTINGS = {
     "MAX_REENGAGE_ATTEMPTS": 5, # Maximum attempts to re-engage mining after a critical zone is detected
     "DOT_GRAY": 146, # Gray value for the dot in the ROI, don't change
     "FILL_GRAY": 37, # Gray value for the fill in the ROI, don't change
-    "FILL_GRAY_URANIUM": 65, # Gray value for the fill in the ROI for uranium, don't change
-    "CRITICAL_GRAY_URANIUM": 161, # Gray value for the critical zone in the ROI for uranium, don't change
     "CRITICAL_GRAY": 228, # Gray value for the critical zone in the ROI, don't change
-    "TOLERANCE": 10 # Tolerance for gray value matching, increase if you have issues with gray values not matching correctly, might increase false positives if you change for some reason. Shouldn't need to be changed.
+    "TOLERANCE": 5 # Tolerance for gray value matching, increase if you have issues with gray values not matching correctly, might increase false positives if you change for some reason. Shouldn't need to be changed.
 }

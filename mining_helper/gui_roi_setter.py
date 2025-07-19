@@ -89,7 +89,7 @@ class ROISetter(QWidget):
         self.setWindowTitle("Mining Assistant")
         self.setGeometry(300, 300, 600, 200)
 
-        icon_path = os.path.join("..", "assets", "logo.svg")
+        icon_path = os.path.join("assets", "app_logo.png")
         self.setWindowIcon(QIcon(icon_path))
 
         self.detector = None
@@ -154,7 +154,7 @@ class ROISetter(QWidget):
         button_layout.addWidget(self.continuous_checkbox)
 
         clear_button = QToolButton(self.console)
-        icon_path = os.path.join("..", "assets", "clear_icon.svg")
+        icon_path = os.path.join("assets", "clear_icon.svg")
         clear_button.setIcon(QIcon(icon_path))
         clear_button.setToolTip("Clear log")
         clear_button.setStyleSheet("""

@@ -41,7 +41,7 @@ class Detector:
                 threading.Thread(target=self.handle_mouse_hold, daemon=True).start()
 
     def handle_mouse_hold(self):
-        if self.mining_thread_active:
+        if self.mining_thread_active or not self.mouse_pressed:
             return
         self.mining_thread_active = True
 
@@ -62,11 +62,11 @@ class Detector:
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            dot_ratio = self.gray_ratio(gray, self.settings["DOT_GRAY"])
+            dot_ratio = self.gray_ratio(gray, self.settings["DOT_GRAY"])         
             fill_ratio = self.gray_ratio(gray, self.settings["FILL_GRAY"])
             crit_ratio = self.gray_ratio(gray, self.settings["CRITICAL_GRAY"])
 
-            # self.log(f"[DEBUG] GrayMatch % — Dot: {dot_ratio:.2%}, Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
+            #self.log(f"[DEBUG] GrayMatch % — Dot: {dot_ratio:.2%}, Fill: {fill_ratio:.2%}, Critical: {crit_ratio:.2%}")
 
             if crit_ratio > max_crit_ratio:
                 max_crit_ratio = crit_ratio
