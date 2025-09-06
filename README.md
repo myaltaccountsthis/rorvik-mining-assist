@@ -132,7 +132,7 @@ rorvik-mining-assist/
 
 You can create a Windows executable using [PyInstaller](https://pyinstaller.org/):
 ```bash
-pyinstaller mining_helper/main.py --onefile --icon=assets/logo.ico --name=MiningHelper
+pyinstaller mining_helper/main.py --onefile --icon=mining_helper/assets/app_logo.ico --name=MiningHelper
 ```
 
 ---
