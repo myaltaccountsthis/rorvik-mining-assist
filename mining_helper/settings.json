@@ -7,5 +7,6 @@
     "DOT_GRAY": 146,
     "FILL_GRAY": 37,
     "CRITICAL_GRAY": 228,
-    "TOLERANCE": 5
+    "TOLERANCE": 5,
+    "KEYBIND": "None"
 }

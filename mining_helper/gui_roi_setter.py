@@ -12,6 +12,7 @@ from PyQt5.QtCore import QRect, Qt, QPoint
 from PyQt5.QtGui import QPainter, QColor, QIcon
 from settings_dialog import SettingsDialog
 from config_manager import load_settings
+from controller import enable_remap, bind_remap, get_keybind
 
 CONFIG_FILE = "roi_config.json"
 HANDLE_SIZE = 10
@@ -127,8 +128,12 @@ class ROISetter(QWidget):
         self.setter_button = QPushButton("Setter Mode")
         self.save_button = QPushButton("Save ROI")
         self.settings_button = QPushButton("Settings")
+        self.remap_button = QPushButton("Keybind")
 
         self.stop_button.setEnabled(False)
+
+        self.update_remap_button()
+        bind_remap(self.update_remap_button, self.toggle_detector)
 
         for btn in [self.start_button, self.stop_button, self.setter_button, self.save_button]:
             btn.setStyleSheet("""
@@ -148,6 +153,7 @@ class ROISetter(QWidget):
         self.setter_button.clicked.connect(self.toggle_setter_mode)
         self.save_button.clicked.connect(self.save_roi)
         self.settings_button.clicked.connect(self.open_settings)
+        self.remap_button.clicked.connect(self.begin_remap)
 
         self.continuous_checkbox = QCheckBox("Continuous Mode")
         self.continuous_checkbox.setStyleSheet("color: black; margin-left: 12px;")
@@ -159,6 +165,7 @@ class ROISetter(QWidget):
         button_layout.addWidget(self.setter_button)
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.settings_button)
+        button_layout.addWidget(self.remap_button)
         button_layout.addWidget(self.continuous_checkbox)
 
         clear_button = QToolButton(self.console)
@@ -213,6 +220,12 @@ class ROISetter(QWidget):
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)
 
+    def toggle_detector(self):
+        if self.detector:
+            self.stop_detector()
+        else:
+            self.start_detector()
+
     def toggle_setter_mode(self):
         if self.overlay:
             self.overlay.close()
@@ -253,6 +266,13 @@ class ROISetter(QWidget):
     def open_settings(self):
         dialog = SettingsDialog(self)
         dialog.exec_()
+
+    def begin_remap(self):
+        self.remap_button.setText("Press key...")
+        enable_remap()
+    
+    def update_remap_button(self):
+        self.remap_button.setText(f"Keybind: {get_keybind()}")
 
     def closeEvent(self, event):
         if self.overlay:

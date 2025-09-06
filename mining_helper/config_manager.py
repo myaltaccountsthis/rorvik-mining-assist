@@ -15,6 +15,9 @@ def load_settings():
     except Exception:
         return DEFAULT_SETTINGS.copy()
 
+def update_settings(new_settings):
+    save_settings({**load_settings(), **new_settings})
+
 def save_settings(new_settings):
     with open(SETTINGS_PATH, "w") as f:
         json.dump(new_settings, f, indent=4)

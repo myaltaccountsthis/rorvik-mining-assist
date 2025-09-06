@@ -7,5 +7,6 @@ DEFAULT_SETTINGS = {
     "DOT_GRAY": 146, # Gray value for the dot in the ROI, don't change
     "FILL_GRAY": 37, # Gray value for the fill in the ROI, don't change
     "CRITICAL_GRAY": 228, # Gray value for the critical zone in the ROI, don't change
-    "TOLERANCE": 5 # Tolerance for gray value matching, increase if you have issues with gray values not matching correctly, might increase false positives if you change for some reason. Shouldn't need to be changed.
+    "TOLERANCE": 5, # Tolerance for gray value matching, increase if you have issues with gray values not matching correctly, might increase false positives if you change for some reason. Shouldn't need to be changed.
+    "KEYBIND": "None"
 }
